@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     await inngest.send({
       name: "scan/submitted",
-      data: { mealLogEntryId: mealLogEntry.id, photoUrl: url, userId: DEV_USER_ID },
+      data: { mealLogEntryId: mealLogEntry.id, photoUrl: photoId, userId: DEV_USER_ID },
     });
 
     // Latency from request-received to job-dispatched, tracked toward the SC-001 p95 target (constitution IV).
