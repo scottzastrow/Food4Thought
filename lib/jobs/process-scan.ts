@@ -1,6 +1,7 @@
 import { inngest } from "@/lib/jobs/client";
 import { prisma } from "@/lib/prisma";
 import { StubFoodVisionProvider } from "@/lib/services/vision/stub-adapter";
+import { OpenAiFoodVisionProvider } from "@/lib/services/vision/openai-adapter";
 import { analyzeWithTimeout } from "@/lib/services/vision/provider";
 import { checkImageQuality } from "@/lib/services/ingestion/quality-check";
 import { classifyContent } from "@/lib/services/vision/content-classification";
@@ -12,7 +13,9 @@ import { StubRestaurantNutritionProvider } from "@/lib/services/nutrition/restau
 import { labelAllergens } from "@/lib/services/restrictions/allergen-labeling";
 import { detectConflicts, type DietaryRestrictionType } from "@/lib/services/restrictions/conflict-detection";
 
-const visionProvider = new StubFoodVisionProvider();
+const visionProvider = process.env.VISION_PROVIDER === "openai"
+  ? new OpenAiFoodVisionProvider()
+  : new StubFoodVisionProvider();
 const restaurantProvider = new StubRestaurantNutritionProvider();
 
 /**
@@ -37,7 +40,7 @@ export const processScan = inngest.createFunction(
       console.info(`[process-scan] mealLogEntryId=${mealLogEntryId} status=${status} durationMs=${Date.now() - startedAt}`);
     };
 
-    const vision = await step.run("analyze-photo", () => analyzeWithTimeout(visionProvider, photoUrl));
+    const vision = await step.run("analyze-photo", () => analyzeWithTimeout(visionProvider, photoUrl, 30000));
 
     const { passesQuality } = checkImageQuality(vision);
     if (!passesQuality) {
